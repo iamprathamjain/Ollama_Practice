@@ -1,0 +1,17 @@
+langchain
+langchain-core
+langchain-ollama
+langchain-community
+langchain_text_splitters
+
+
+ollama
+chromadb
+pdfplumber 
+
+unstructured
+unstructured[all-docs]
+fastembed
+pikepdf
+sentence-transformers
+elevenlabs

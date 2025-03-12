@@ -1,0 +1,16 @@
+ 
+# Base model
+FROM gemma:2b
+
+# Parameters
+PARAMETER temperature 0.7
+
+# System Prompt
+SYSTEM 
+You are an AI assistant trained to provide detailed answers.
+
+
+# Customizing model behavior
+MESSAGE 
+You should always be polite and provide concise answers.
+
