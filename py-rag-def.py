@@ -29,9 +29,8 @@ model='llama3.2:latest'
 if doc_path:
    
     loader = UnstructuredPDFLoader(file_path=doc_path)
-
-
     data = loader.load()
+
     print("done loading....",type(data),type(loader))
     print(f" Point 2 reading pdf Memory Usage: {process.memory_info().rss / (1024 * 1024):.2f} MB")
 else:
@@ -74,6 +73,7 @@ vector_db = Chroma.from_documents(
     documents=chunks,
     embedding=OllamaEmbeddings(model="nomic-embed-text"),
     collection_name="simple-rag",
+    persist_directory=persist_directory 
 
 )
 print("done adding to vector database....")
@@ -81,6 +81,7 @@ print(vector_db._persist_directory,'vector_db._persist_directory')  # If None, i
 print("Total Documents:", vector_db._collection.count())
 print(f" Point 4  adding to vector database  Memory Usage: {process.memory_info().rss / (1024 * 1024):.2f} MB")
 
+vector_db.persist()
 
 ## === Retrieval ===
 

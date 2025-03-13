@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Screen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+        body[data-theme="light"] {
+            background: linear-gradient(270deg, #ff6a00, #ee0979);
+        }
+        body[data-theme="dark"] {
+            background: linear-gradient(270deg, #141e30, #243b55);
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background: var(--bg-color);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        [data-theme="dark"] .chat-container {
+            --bg-color: #1a1a1a;
+            --text-color: #fff;
+        }
+        [data-theme="light"] .chat-container {
+            --bg-color: #fff;
+            --text-color: #000;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .chat-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 75%;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .sent {
+            align-self: flex-end;
+            background: #007bff;
+            color: white;
+        }
+        .received {
+            align-self: flex-start;
+            background: #e9ecef;
+        }
+        .input-group {
+            padding: 10px;
+            background: var(--bg-color);
+            display: flex;
+            gap: 5px;
+        }
+        [data-theme="dark"] .received {
+            background: #2a2a2a;
+            color: #fff;
+        }
+        .typing-animation {
+            display: none;
+            font-style: italic;
+            color: grey;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button class="btn btn-secondary theme-toggle" id="theme-toggle">🌓</button>
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box"></div>
+        <div class="typing-animation" id="typing">Typing...</div>
+        <div class="input-group">
+            <input type="text" id="chat-input" class="form-control" placeholder="Type a message...">
+            <button class="btn btn-primary" id="send-btn">Send 1</button>
+            <button class="btn btn-success" id="send-btn2">Send 2</button>
+            <button class="btn btn-secondary" id="voice-btn">🎤</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Theme toggle
+            $("#theme-toggle").click(function() {
+                const currentTheme = $('html').attr('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                $('html').attr('data-theme', newTheme);
+                $('body').attr('data-theme', newTheme);
+            });
+
+            $("#send-btn").click(function () {
+                let msg = $("#chat-input").val().trim();
+                if (msg) {
+                    $("#chat-box").append(`<div class='message sent'>${msg}</div>`);
+                    $("#chat-input").val("");
+                    $("#typing").hide();
+                    $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+                }
+            });
+
+            $("#send-btn2").click(function () {
+                let msg = $("#chat-input").val().trim();
+                if (msg) {
+                    $("#chat-box").append(`<div class='message received'>${msg}</div>`);
+                    $("#chat-input").val("");
+                    $("#typing").hide();
+                    $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+                }
+            });
+
+            // Voice recognition with error handling
+            $("#voice-btn").click(async function () {
+                if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                    try {
+                        // Request microphone permission first
+                        await navigator.mediaDevices.getUserMedia({ audio: true });
+                        
+                        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                        recognition.lang = 'en-US';
+                        recognition.continuous = false;
+                        recognition.interimResults = false;
+
+                        recognition.onstart = function() {
+                            $("#voice-btn").addClass('btn-danger').text('🎤 Recording...');
+                        };
+
+                        recognition.onend = function() {
+                            $("#voice-btn").removeClass('btn-danger').text('🎤');
+                        };
+
+                        recognition.onresult = function(event) {
+                            const transcript = event.results[0][0].transcript;
+                            $("#chat-input").val(transcript);
+                        };
+
+                        recognition.onerror = function(event) {
+                            let errorMessage = 'Speech recognition error';
+                            switch(event.error) {
+                                case 'not-allowed':
+                                    errorMessage = 'Microphone access was denied. Please allow microphone access in your browser settings.';
+                                    break;
+                                case 'audio-capture':
+                                    errorMessage = 'No microphone was found. Please connect a microphone and try again.';
+                                    break;
+                                case 'network':
+                                    errorMessage = 'Network error occurred. Please check your internet connection.';
+                                    break;
+                                default:
+                                    errorMessage = `Speech recognition error: ${event.error}`;
+                            }
+                            alert(errorMessage);
+                            $("#voice-btn").removeClass('btn-danger').text('🎤');
+                        };
+
+                        recognition.start();
+                    } catch (err) {
+                        alert('Microphone permission was denied. Please allow microphone access in your browser settings.');
+                        $("#voice-btn").removeClass('btn-danger').text('🎤');
+                    }
+                } else {
+                    alert('Speech recognition is not supported in this browser');
+                }
+            });
+
+            $("#chat-input").on("input", function () {
+                $("#typing").show();
+                clearTimeout(window.typingTimeout);
+                window.typingTimeout = setTimeout(() => { $("#typing").hide(); }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
